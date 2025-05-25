@@ -45,4 +45,4 @@ def check_number():
         return jsonify({'number_plate':number, "message":"no onwer found in db"})
     
 if __name__=="__main__":
-    app.run(host='0.0.0.0',debug=True)
+    app.run(host='0.0.0.0',port=10000)
