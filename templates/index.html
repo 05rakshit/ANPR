@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Number Plate Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Number Plate Recognition</h1>
+
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="image">Upload Vehicle Image:</label>
+        <input type="file" name="image" id="image" accept="image/*" capture="environment">
+        <button type="submit">Submit</button>
+    </form>
+
+    <hr>
+
+    <form id="number-form">
+        <label for="number">Enter Vehicle Number:</label>
+        <input type="text" id="number" name="number">
+        <button type="submit">Check</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
