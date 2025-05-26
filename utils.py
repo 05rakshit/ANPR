@@ -11,10 +11,10 @@ def connect_to_database():
     try:
         cnx = connection.MySQLConnection(
             user='root',
-            password='admin',
-            host='127.0.0.1',
-            database='rakshit ',
-            port='3306'
+            password='QHdpjQYeAqWdLwnuIQPcwPwrHBcCwJFY',
+            host='mainline.proxy.rlwy.net',
+            database='railway',
+            port='55270'
         )
         return cnx
     except mysql.connector.Error as err:
