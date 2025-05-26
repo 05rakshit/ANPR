@@ -24,7 +24,7 @@ def upload_image():
     
     owner=get_owner_details(number_plate)
     if owner:
-        return jsonify({'number_plate':number_plate, 'owner':owner[0], 'phone':owner[1]})
+        return jsonify({'number_plate':number_plate, 'owner':owner[0], 'phone':owner[1], 'address':owner[2]})
     
     else:
         return jsonify({'number_plate':number_plate, 'message':"no onwer found in DB"})
@@ -39,7 +39,7 @@ def check_number():
     
     owner= get_owner_details(number)
     if owner:
-        return jsonify({"number_plate":number, "owner":owner[0], "phone_number":owner[1]})
+        return jsonify({"number_plate":number, "owner":owner[0], "phone_number":owner[1], 'address':owner[2]})
     
     else:
         return jsonify({'number_plate':number, "message":"no onwer found in db"})
