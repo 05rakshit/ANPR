@@ -12,7 +12,10 @@ document.getElementById('upload-form').addEventListener('submit', function (e) {
     }).then(res => res.json())
       .then(data => {
           document.getElementById('result').innerText = JSON.stringify(data, null, 2);
-      });
+      })
+      .catch(err => {
+        document.getElementById('result').innerText = `Error: ${err}`;
+    });
 });
 
 // Handle direct number input
@@ -28,8 +31,6 @@ document.getElementById('number-form').addEventListener('submit', function (e) {
     }).then(res => res.json())
       .then(data => {
           document.getElementById('result').innerText = JSON.stringify(data, null, 2);
-      })
-      .catch(err => {
-        document.getElementById('result').innerText = `Error: ${err}`;
-    });
+      });
+      
 });
