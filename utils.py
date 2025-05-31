@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import imutils
+import easyocr
 import mysql.connector
 from mysql.connector import errorcode,connection
 
@@ -26,7 +27,7 @@ def connect_to_database():
         return None
 
 #image processing and number extraction
-def extract_number_plate(img_path, reader):
+def extract_number_plate(img_path):
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -45,9 +46,6 @@ def extract_number_plate(img_path, reader):
             location = approx
             break
 
-    if location is None:
-        return None
-
     mask = np.zeros(gray.shape, np.uint8)
     new_image = cv2.drawContours(mask, [location], 0, 255, -1)
     new_image = cv2.bitwise_and(img, img, mask=mask)
@@ -55,15 +53,16 @@ def extract_number_plate(img_path, reader):
     (x, y) = np.where(mask == 255)
     (x1, y1) = (np.min(x), np.min(y))
     (x2, y2) = (np.max(x), np.max(y))
-    cropped_image = gray[x1:x2 + 1, y1:y2 + 1]
+    cropped_image = gray[x1:x2 + 1, y1:y2]
 
+    reader = easyocr.Reader(['en'])
     result = reader.readtext(cropped_image)
 
     if result:
         text = result[0][-2]
-        if text == "IND" and len(result) > 1:
+        if text == "IND":
             text = result[1][-2]
-        return text.replace(" ", "")
+        return text.replace(" ","")
     return None
 
 # Look up in MySQL
