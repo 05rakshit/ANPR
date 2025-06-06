@@ -1,5 +1,5 @@
 blinker==1.9.0
-click==7.1.2
+click
 click-didyoumean==0.3.1
 colorama==0.4.6
 easyocr==1.7.2
