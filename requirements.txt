@@ -1,6 +1,6 @@
 blinker==1.9.0
 click
-click-didyoumean==0.3.1
+click-didyoumean
 colorama==0.4.6
 easyocr==1.7.2
 filelock==3.18.0
