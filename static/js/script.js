@@ -92,7 +92,7 @@ function displayResult(data) {
                     <li class="list-group-item"><strong>Owner:</strong> ${data.owner || "N/A"}</li>
                     <li class="list-group-item"><strong>Vehicle Number:</strong> ${data.number_plate || "N/A"}</li>
                     <li class="list-group-item"><strong>Contact:</strong> ${data.phone_number || "N/A"}</li>
-                    <li class="list-group-item"><strong>Vehicle Type:</strong> ${data.address || "N/A"}</li>
+                    <li class="list-group-item"><strong>Address:</strong> ${data.address || "N/A"}</li>
                 </ul>
             </div>
         </div>
