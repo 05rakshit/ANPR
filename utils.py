@@ -5,6 +5,7 @@ import easyocr
 import mysql.connector
 from mysql.connector import errorcode,connection
 
+reader = easyocr.Reader(['en'], gpu=False)
 
 # Function to connect to the MySQL database
 def connect_to_database():
@@ -55,7 +56,6 @@ def extract_number_plate(img_path):
     (x2, y2) = (np.max(x), np.max(y))
     cropped_image = gray[x1:x2 + 1, y1:y2]
 
-    reader = easyocr.Reader(['en'])
     result = reader.readtext(cropped_image)
 
     if result:
