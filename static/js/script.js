@@ -91,9 +91,8 @@ function displayResult(data) {
                 <ul class="list-group list-group-flush mt-3">
                     <li class="list-group-item"><strong>Owner:</strong> ${data.owner || "N/A"}</li>
                     <li class="list-group-item"><strong>Vehicle Number:</strong> ${data.number_plate || "N/A"}</li>
-                    <li class="list-group-item"><strong>Contact:</strong> ${data.contact || "N/A"}</li>
-                    <li class="list-group-item"><strong>Vehicle Type:</strong> ${data.type || "N/A"}</li>
-                    <li class="list-group-item"><strong>Model:</strong> ${data.model || "N/A"}</li>
+                    <li class="list-group-item"><strong>Contact:</strong> ${data.phone_number || "N/A"}</li>
+                    <li class="list-group-item"><strong>Vehicle Type:</strong> ${data.address || "N/A"}</li>
                 </ul>
             </div>
         </div>
