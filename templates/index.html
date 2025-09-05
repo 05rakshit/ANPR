@@ -25,16 +25,12 @@
 
         <!-- Image Upload -->
         <div class="card shadow-sm p-4 mb-4">
-            <form id="upload-form" enctype="multipart/form-data" method="POST">
+            <form id="upload-form" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label for="image" class="form-label">
-                        <i class="fa-solid fa-image"></i> Upload Vehicle Image:
-                    </label>
-                    <input type="file" name="image" id="image" class="form-control" accept="image/*" capture="environment">
+                    <label for="image" class="form-label">Upload Vehicle Image:</label>
+                    <input type="file" name="image" id="image" class="form-control" accept="image/*">
                 </div>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fa-solid fa-upload"></i> Submit
-                </button>
+                <button type="submit" class="btn btn-primary w-100">Submit</button>
             </form>
         </div>
 

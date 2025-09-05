@@ -1,13 +1,13 @@
 import os
-import uuid
 from flask import Flask, jsonify, request, render_template
 from utils import get_owner_details, extract_number_plate
 
 app = Flask(__name__)
 
-# Folder to save uploaded images
-UPLOAD_FOLDER = 'uploads'
+# Temporary uploads folder
+UPLOAD_FOLDER = "/tmp/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max upload
 
 @app.route("/")
 def index():
@@ -15,26 +15,18 @@ def index():
 
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
-    if 'image' not in request.files:
+    file = request.files.get('image')
+    if not file:
         return jsonify({'error': 'No image provided'}), 400
 
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({'error': 'Empty file name'}), 400
-
-    # Save file with unique name to avoid collisions
-    filename = f"{uuid.uuid4().hex}_{file.filename}"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(filepath)
 
-    # Extract number plate
     number_plate = extract_number_plate(filepath)
-
-    # Remove file after processing
-    os.remove(filepath)
+    os.remove(filepath)  # delete after processing
 
     if not number_plate:
-        return jsonify({'error': "Number plate not found"}), 404
+        return jsonify({'error': 'Number plate not found'}), 404
 
     owner = get_owner_details(number_plate)
     if owner:
@@ -45,17 +37,19 @@ def upload_image():
             'address': owner[2]
         })
     else:
-        return jsonify({'number_plate': number_plate, 'message': "No owner found in DB"})
+        return jsonify({
+            'number_plate': number_plate,
+            'message': 'No owner found in DB'
+        })
 
 @app.route('/check-number', methods=['POST'])
 def check_number():
     data = request.get_json()
-    if not data or 'number_plate' not in data:
+    number = data.get("number_plate")
+    if not number:
         return jsonify({"error": "Number plate not provided"}), 400
 
-    number = data['number_plate']
     owner = get_owner_details(number)
-
     if owner:
         return jsonify({
             "number_plate": number,
@@ -64,8 +58,11 @@ def check_number():
             "address": owner[2]
         })
     else:
-        return jsonify({'number_plate': number, "message": "No owner found in DB"})
+        return jsonify({
+            'number_plate': number,
+            "message": "No owner found in DB"
+        })
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Render uses PORT environment variable
+    app.run(host="0.0.0.0", port=port)
