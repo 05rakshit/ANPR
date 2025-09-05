@@ -4,6 +4,7 @@ import imutils
 import easyocr
 import mysql.connector
 from mysql.connector import errorcode, connection
+import os
 
 # Initialize EasyOCR reader once globally (faster)
 reader = easyocr.Reader(['en'], gpu=False)
