@@ -1,70 +1,98 @@
-import os
 import cv2
-import numpy as np
-import imutils
 import easyocr
+import re
 import mysql.connector
-from mysql.connector import errorcode, connection
+from mysql.connector import connection
+
+# Initialize EasyOCR reader once
+reader = easyocr.Reader(['en'])
 
 def connect_to_database():
+    """
+    Connect to your Railway MySQL database.
+    """
     try:
         cnx = connection.MySQLConnection(
-            user='root', 
-            password='QHdpjQYeAqWdLwnuIQPcwPwrHBcCwJFY', 
-            host='mainline.proxy.rlwy.net', 
-            database='railway', 
+            user='root',
+            password='QHdpjQYeAqWdLwnuIQPcwPwrHBcCwJFY',
+            host='mainline.proxy.rlwy.net',
+            database='railway',
             port='55270'
         )
         return cnx
     except mysql.connector.Error as err:
-        print(err)
+        print("Database connection error:", err)
         return None
 
-def extract_number_plate(img_path):
-    img = cv2.imread(img_path)
+
+def clean_number_plate(text):
+    """
+    Cleans and validates the OCR extracted text to match Indian vehicle number plate format.
+    """
+    # Remove non-alphanumeric characters and convert to uppercase
+    text = re.sub(r'[^A-Z0-9]', '', text.upper())
+
+    # Common OCR misreads correction
+    corrections = {
+        'O': '0',
+        'I': '1',
+        'Z': '2',
+        'S': '5',
+        'B': '8'
+    }
+    for k, v in corrections.items():
+        text = text.replace(k, v)
+
+    # Indian number plate regex
+    pattern = r'^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$'
+
+    # If direct match → return
+    if re.match(pattern, text):
+        return text
+
+    # If one extra char (like DL9CBE02585 → DL9CBE0258)
+    if re.match(pattern, text[:-1]):
+        return text[:-1]
+
+    # If still not valid, return raw but corrected text
+    return text
+
+
+def extract_number_plate(image_path):
+    """
+    Extracts and cleans the number plate text from an image using EasyOCR.
+    """
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"Error: Could not read image {image_path}")
+        return None
+
+    # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    bfilter = cv2.bilateralFilter(gray, 11, 17, 17)
-    edged = cv2.Canny(bfilter, 30, 200)
+    # OCR with EasyOCR
+    results = reader.readtext(gray)
 
-    keypoints = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours = imutils.grab_contours(keypoints)
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
-
-    location = None
-    for contour in contours:
-        approx = cv2.approxPolyDP(contour, 10, True)
-        if len(approx) == 4:
-            location = approx
-            break
-
-    if location is None:
-        return None
-
-    mask = np.zeros(gray.shape, np.uint8)
-    new_image = cv2.drawContours(mask, [location], 0, 255, -1)
-    new_image = cv2.bitwise_and(img, img, mask=mask)
-
-    (x, y) = np.where(mask == 255)
-    (x1, y1) = (np.min(x), np.min(y))
-    (x2, y2) = (np.max(x), np.max(y))
-    cropped_image = gray[x1:x2 + 1, y1:y2 + 1]
-
-    reader = easyocr.Reader(['en'])
-    result = reader.readtext(cropped_image)
-
-    if result:
-        text = result[0][-2]
-        if text == "IND" and len(result) > 1:
-            text = result[1][-2]
-        return text.replace(" ", "")
+    # Loop over detections
+    for (bbox, text, prob) in results:
+        if prob > 0.3:  # confidence threshold
+            plate = clean_number_plate(text)
+            if len(plate) >= 8:  # avoid short junk results
+                return plate
     return None
 
+
 def get_owner_details(number_plate):
+    """
+    Fetch owner details from the DB given a valid number plate.
+    """
     cnx = connect_to_database()
     if cnx:
         cursor = cnx.cursor()
-        cursor.execute("SELECT owner_name, phone_number, address FROM vehicle_owner WHERE number_plate = %s", (number_plate,))
+        cursor.execute(
+            "SELECT owner_name, phone_number, address FROM vehicle_owner WHERE number_plate = %s",
+            (number_plate,)
+        )
         owner_info = cursor.fetchone()
         cursor.close()
         cnx.close()
