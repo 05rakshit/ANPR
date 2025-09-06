@@ -7,6 +7,7 @@ from mysql.connector import connection
 # Initialize EasyOCR reader once
 reader = easyocr.Reader(['en'])
 
+
 def connect_to_database():
     """
     Connect to your Railway MySQL database.
@@ -17,7 +18,7 @@ def connect_to_database():
             password='QHdpjQYeAqWdLwnuIQPcwPwrHBcCwJFY',
             host='mainline.proxy.rlwy.net',
             database='railway',
-            port='55270'
+            port=55270  # ✅ fixed to integer
         )
         return cnx
     except mysql.connector.Error as err:
@@ -75,7 +76,7 @@ def extract_number_plate(image_path):
 
     # Loop over detections
     for (bbox, text, prob) in results:
-        if prob > 0.3:  # confidence threshold
+        if prob > 0.5:  # ✅ stricter confidence threshold
             plate = clean_number_plate(text)
             if len(plate) >= 8:  # avoid short junk results
                 return plate

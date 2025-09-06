@@ -1,4 +1,5 @@
 import os
+import uuid
 from flask import Flask, jsonify, request, render_template
 from utils import get_owner_details, extract_number_plate
 
@@ -9,9 +10,11 @@ UPLOAD_FOLDER = "/tmp/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max upload
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.route('/upload-image', methods=['POST'])
 def upload_image():
@@ -19,7 +22,9 @@ def upload_image():
     if not file:
         return jsonify({'error': 'No image provided'}), 400
 
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+    # Unique filename
+    filename = f"{uuid.uuid4().hex}_{file.filename}"
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
     number_plate = extract_number_plate(filepath)
@@ -42,6 +47,7 @@ def upload_image():
             'message': 'No owner found in DB'
         })
 
+
 @app.route('/check-number', methods=['POST'])
 def check_number():
     data = request.get_json()
@@ -62,6 +68,7 @@ def check_number():
             'number_plate': number,
             "message": "No owner found in DB"
         })
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Render uses PORT environment variable
