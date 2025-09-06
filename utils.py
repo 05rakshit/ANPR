@@ -11,6 +11,7 @@ reader = easyocr.Reader(['en'], gpu=False)
 
 
 def connect_to_database():
+    """Connect to Railway MySQL database."""
     try:
         cnx = connection.MySQLConnection(
             user='root',
@@ -26,15 +27,43 @@ def connect_to_database():
 
 
 def clean_number_plate(text: str) -> str:
-    """Cleans and formats OCR output into Indian number plate style."""
+    """Cleans OCR output into valid Indian number plate format."""
     text = re.sub(r'[^A-Z0-9]', '', text.upper())
-    corrections = {'O': '0', 'I': '1', 'Z': '2', 'S': '5', 'B': '8'}
-    for k, v in corrections.items():
-        text = text.replace(k, v)
+
+    # Split into prefix (state code + RTO, usually first 4 chars) and rest
+    prefix, rest = text[:4], text[4:]
+
+    # Apply corrections ONLY to numeric part
+    corrections = {
+        'O': '0',
+        'I': '1',
+        'Z': '2',
+        'S': '5',
+        'B': '8',
+        'G': '6',
+        'Q': '0'
+    }
+    cleaned_rest = "".join(corrections.get(ch, ch) for ch in rest)
+    text = prefix + cleaned_rest
+
+    # Indian number plate regex
+    pattern = r'^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{4}$'
+
+    # Handle cases
+    if len(text) > 10 and re.match(pattern, text[1:]):
+        return text[1:]  # Extra leading char
+
+    if re.match(pattern, text):
+        return text  # Valid plate
+
+    if re.match(pattern, text[:-1]):
+        return text[:-1]  # Off-by-one char at end
+
     return text
 
 
-def extract_number_plate(img_path):
+def extract_number_plate(img_path: str):
+    """Extracts number plate text from an image using EasyOCR."""
     # Handle EXIF rotation
     pil_img = Image.open(img_path)
     try:
@@ -56,7 +85,7 @@ def extract_number_plate(img_path):
     # Convert to OpenCV
     img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-    # Resize only if too large
+    # Resize if image is too wide
     if img.shape[1] > 800:
         scale = 800 / img.shape[1]
         img = cv2.resize(img, (800, int(img.shape[0] * scale)))
@@ -77,18 +106,19 @@ def extract_number_plate(img_path):
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
         aspect_ratio = w / float(h)
-        if 2 < aspect_ratio < 6:  # number plates usually rectangular
+        if 2 < aspect_ratio < 6:  # Plates are rectangular
             if 1000 < cv2.contourArea(contour) < 15000:
                 plate_img = gray[y:y+h, x:x+w]
                 break
 
+    # Fallback to full image if no contour match
     if plate_img is None:
         plate_img = gray
 
     # OCR with EasyOCR
     results = reader.readtext(plate_img)
 
-    # Keep only confident results
+    # Filter confident results
     results = [r for r in results if r[-1] > 0.3]
 
     if results:
@@ -97,7 +127,8 @@ def extract_number_plate(img_path):
     return None
 
 
-def get_owner_details(number_plate):
+def get_owner_details(number_plate: str):
+    """Fetch owner details from DB for given number plate."""
     try:
         cnx = connect_to_database()
         if not cnx:
